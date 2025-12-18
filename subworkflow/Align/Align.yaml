@@ -1,0 +1,9 @@
+genome:
+  mouse:
+    fasta: "/disk5/luosg/Reference/GENCODE/mouse/GRCm39/GRCm39.primary_assembly.genome.fa"
+    gtf: "/disk5/luosg/Reference/GENCODE/mouse/GRCm39/gencode.vM38.primary_assembly.basic.annotation.gtf"
+
+tools:
+  bowtie2-build: "/opt/bowtie2-2.5.4-linux-x86_64/bowtie2-build"
+  bowtie2: "/opt/bowtie2-2.5.4-linux-x86_64/bowtie2"
+  trim_galore: "/opt/TrimGalore-0.6.10/trim_galore"
