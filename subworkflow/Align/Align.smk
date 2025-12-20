@@ -172,30 +172,70 @@ rule bowtie2_align:
         fi
         """
 
-def get_input_for_macs2_callpeak(wildcards):
+def get_input_for_macs3_callpeak(wildcards):
+    sample = wildcards.sample_id
+    genome = wildcards.genome
 
-rule macs2_callpeak:
+    # IP BAM（treatment）
+    bam_treatment = f"{outdir}/bam/{genome}/{sample}.bam"
+
+    # 从 metadata 里找匹配的 Input
+    meta = sample_table.loc[sample]
+
+    if meta["role"] != "IP":
+        raise ValueError(f"{sample} is not an IP sample")
+
+    # 只允许同 genotype 的 Input
+    genotype = meta["genotype"]
+
+    matched_inputs = sample_table[
+        (sample_table["role"] == "Input") &
+        (sample_table["genotype"] == genotype)
+    ]
+
+    if len(matched_inputs) == 0:
+        # 没有 Input → MACS3 无 control
+        return {
+            "bam_treatment": bam_treatment
+        }
+
+    if len(matched_inputs) > 1:
+        raise ValueError(f"Multiple Inputs found for genotype {genotype}")
+
+    bam_control = (
+        f"{outdir}/bam/{genome}/{matched_inputs.index[0]}.bam"
+    )
+
+    return {
+        "bam_treatment": bam_treatment,
+        "bam_control": bam_control
+    }
+
+rule macs3_callpeak:
     input:
-        get_input_for_macs2_callpeak
+        get_input_for_macs3_callpeak
     output:
-    
+        peak = outdir + "/macs3/{genome}/{sample_id}/{sample_id}_peaks.narrowPeak"
     log:
-        outdir + "/log/Align/macs2/{genome}/{sample_id}/bowtie2_align.log"
+        outdir + "/log/macs3/{genome}/{sample_id}.log"
     params:
-        macs2_cmd = config.get('tools',{}).get('macs2','macs2'),
-    conda:
-        config['conda']['run']
+        macs3_cmd = config.get("tools", {}).get("macs3", "macs3"),
+        outdir = lambda wildcards: f"{outdir}/macs3/{wildcards.genome}/{wildcards.sample_id}",
+        name = lambda wildcards: wildcards.sample_id
     threads:
         8
+    conda:
+        config["conda"]["run"]
     shell:
-        """
-        macs2 callpeak \
-            -t treatment.bam \
-            -c control.bam \
-            -f BAM \
-            -g mm \
+        r"""
+        {params.macs3_cmd} callpeak \
+            -t {input.bam_treatment} \
+            {('-c ' + input.bam_control) if 'bam_control' in input else ''} \
             --bw 200 \
             -p 1e-5 \
-            -n sample_name \
-            --outdir macs2_out
+            -g mm \
+            --outdir {params.outdir} \
+            --name {params.name} \
+            --seed 2346 \
+            &> {log}
         """
