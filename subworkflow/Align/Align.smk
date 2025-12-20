@@ -171,7 +171,31 @@ rule bowtie2_align:
             exit 1
         fi
         """
-    
-rule macs2:
+
+def get_input_for_macs2_callpeak(wildcards):
+
+rule macs2_callpeak:
     input:
-        
+        get_input_for_macs2_callpeak
+    output:
+    
+    log:
+        outdir + "/log/Align/macs2/{genome}/{sample_id}/bowtie2_align.log"
+    params:
+        macs2_cmd = config.get('tools',{}).get('macs2','macs2'),
+    conda:
+        config['conda']['run']
+    threads:
+        8
+    shell:
+        """
+        macs2 callpeak \
+            -t treatment.bam \
+            -c control.bam \
+            -f BAM \
+            -g mm \
+            --bw 200 \
+            -p 1e-5 \
+            -n sample_name \
+            --outdir macs2_out
+        """

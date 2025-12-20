@@ -48,7 +48,7 @@ class SNPMetadata:
         self.logger.info(f"Detected separator '{sep}' for metadata file {self.meta}")
 
         df = pd.read_csv(self.meta,sep=sep)
-        requeired_column = ["Data_id","Sample_id","organism"]
+        requeired_column = ["Data_id","Sample_id","organism","group"]
 
         missing_cols = [col for col in requeired_column if col not in df.columns]
         if missing_cols:
