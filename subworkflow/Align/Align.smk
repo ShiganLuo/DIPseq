@@ -158,7 +158,7 @@ rule bowtie2_align:
                 -N 1 -L 30 \
                 --threads {threads} 2> {log} \
                 | {params.samtools_cmd} sort -@ {threads} -o {output.bam} - >> {log} 2>&1
-
+            {params.samtools_cmd} index {output.bam}
         elif [ "$fq_count" -eq 1 ]; then
             # 单端逻辑
             {params.bowtie2_cmd} -x {params.index_prefix} \
@@ -166,6 +166,7 @@ rule bowtie2_align:
                 -N 1 -L 30 \
                 --threads {threads} 2> {log} \
                 | {params.samtools_cmd} sort -@ {threads} -o {output.bam} - >> {log} 2>&1
+            {params.samtools_cmd} index {output.bam}
         else
             echo "Error: Expected 1 or 2 fastq files, got $fq_count" > {log}
             exit 1
